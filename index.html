@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#0d0d0d" id="themeColorMeta" />
+  <title>Espetinho App</title>
+  <link rel="icon" type="image/png" href="src/espeto.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <span class="header-icon">🍢</span>
+      <span class="header-title">ESPETINHO</span>
+    </div>
+    <div class="header-right">
+      <div class="header-summary">
+        <span id="summaryCount">0 pedidos</span>
+        <span class="summary-divider">|</span>
+        <span id="summaryTotal">R$ 0,00</span>
+      </div>
+      <button class="btn-theme" id="btnTheme" onclick="ui.toggleTheme()" title="Alternar tema">
+        <span id="themeIcon">☀️</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- TABS -->
+  <nav class="tabs">
+    <button class="tab active" data-tab="pedidos" onclick="ui.switchTab('pedidos')">
+      PEDIDOS
+      <span class="tab-badge" id="badgePedidos">0</span>
+    </button>
+    <button class="tab" data-tab="concluidos" onclick="ui.switchTab('concluidos')">
+      FEITOS
+      <span class="tab-badge tab-badge--done" id="badgeConcluidos">0</span>
+    </button>
+    <button class="tab" data-tab="novo" onclick="ui.switchTab('novo')">
+      + NOVO
+    </button>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── ABA: PEDIDOS EM ANDAMENTO ─────────────────────── -->
+    <section class="tab-content active" id="tab-pedidos">
+      <div class="list-header">
+        <span>EM ANDAMENTO</span>
+        <span id="countAndamento" class="list-count">0</span>
+      </div>
+      <div class="order-list" id="listaPedidos">
+        <div class="empty-state" id="emptyPedidos">
+          <span class="empty-icon">📋</span>
+          <p>Nenhum pedido ainda</p>
+          <small>Toque em "+ NOVO" para começar</small>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ABA: CONCLUÍDOS ───────────────────────────────── -->
+    <section class="tab-content" id="tab-concluidos">
+      <div class="list-header">
+        <span>CONCLUÍDOS HOJE</span>
+        <span id="countConcluidos" class="list-count">0</span>
+      </div>
+      <div class="order-list" id="listaConcluidos">
+        <div class="empty-state" id="emptyConcluidos">
+          <span class="empty-icon">✅</span>
+          <p>Nenhum pedido concluído</p>
+          <small>Os pedidos finalizados aparecerão aqui</small>
+        </div>
+      </div>
+      <div class="day-summary">
+        <div class="day-summary-title">RESUMO DO DIA</div>
+        <div class="day-summary-grid">
+          <div class="day-stat">
+            <span class="day-stat-value" id="resumoTotal">R$ 0,00</span>
+            <span class="day-stat-label">Total Vendido</span>
+          </div>
+          <div class="day-stat">
+            <span class="day-stat-value" id="resumoQtd">0</span>
+            <span class="day-stat-label">Pedidos</span>
+          </div>
+        </div>
+        <button class="btn btn--danger btn--sm" onclick="app.limparConcluidos()">
+          Limpar histórico do dia
+        </button>
+      </div>
+    </section>
+
+    <!-- ── ABA: NOVO PEDIDO ──────────────────────────────── -->
+    <section class="tab-content" id="tab-novo">
+      <div class="form-card">
+        <h2 class="form-title">Novo Pedido</h2>
+
+        <!-- Cliente -->
+        <div class="field">
+          <label class="label">Cliente <span class="optional">(opcional)</span></label>
+          <input class="input" id="inputCliente" type="text"
+            placeholder="Ex: Mesa 3, João..." autocomplete="off" />
+        </div>
+
+        <!-- ── CARDÁPIO RÁPIDO ─────────────────────────────── -->
+        <div class="field">
+          <label class="label">Cardápio</label>
+
+          <!-- Busca autocomplete -->
+          <div class="search-wrap">
+            <input class="input input-search" id="inputBuscaCardapio" type="text"
+              placeholder="🔍  Buscar item (frango, cerveja...)" autocomplete="off" />
+            <div class="cardapio-sugestoes" id="cardapioSugestoes"></div>
+          </div>
+
+          <!-- Filtros de categoria -->
+          <div class="cardapio-tabs">
+            <button class="cardapio-tab active" data-cat="espeto" onclick="ui.filtrarCardapio('espeto')">🍢 Espetos</button>
+            <button class="cardapio-tab" data-cat="bebida" onclick="ui.filtrarCardapio('bebida')">🥤 Bebidas</button>
+            <button class="cardapio-tab" data-cat="acomp"  onclick="ui.filtrarCardapio('acomp')">🫙 Acomp.</button>
+            <button class="cardapio-tab" data-cat="combo"  onclick="ui.filtrarCardapio('combo')">🎯 Combos</button>
+          </div>
+
+          <!-- Grid de itens -->
+          <div class="cardapio-grid" id="cardapioGrid"></div>
+        </div>
+
+        <!-- Itens adicionados ao pedido -->
+        <div class="field" id="fieldItensAdicionados" style="display:none">
+          <label class="label">
+            Itens adicionados
+            <button class="btn-link" onclick="app.limparItensPedido()">limpar tudo</button>
+          </label>
+          <div class="itens-adicionados" id="itensAdicionados"></div>
+        </div>
+
+        <!-- Observação / item avulso -->
+        <div class="field">
+          <label class="label">Observação / item avulso <span class="optional">(opcional)</span></label>
+          <textarea class="input textarea" id="inputItens"
+            placeholder="Ex: sem sal, ponto mal passado, açaí..." rows="2"></textarea>
+        </div>
+
+        <!-- Valor total -->
+        <div class="field">
+          <label class="label">
+            Valor Total
+            <span class="label-hint" id="valorCalcHint"></span>
+          </label>
+          <div class="input-money-wrap">
+            <span class="money-prefix">R$</span>
+            <input class="input input-money" id="inputValor" type="number"
+              min="0" step="0.50" placeholder="0,00" inputmode="decimal" />
+          </div>
+        </div>
+
+        <button class="btn btn--primary btn--full" onclick="app.criarPedido()">
+          ✓ ADICIONAR PEDIDO
+        </button>
+
+        <div class="feedback" id="feedback"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══ MODAL: CONFIRMAÇÃO ════════════════════════════════ -->
+  <div class="modal-overlay" id="modalOverlay" onclick="ui.fecharModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <p class="modal-text" id="modalText">Tem certeza?</p>
+      <div class="modal-actions">
+        <button class="btn btn--ghost" onclick="ui.fecharModal()">Cancelar</button>
+        <button class="btn btn--danger" id="modalConfirm">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MODAL: QUANTIDADE ══════════════════════════════════ -->
+  <div class="modal-overlay" id="modalQtdOverlay">
+    <div class="modal modal--qtd" onclick="event.stopPropagation()">
+      <div class="modal-item-info">
+        <span id="modalItemEmoji" class="modal-item-emoji">🍢</span>
+        <div class="modal-item-texts">
+          <span id="modalItemNome" class="modal-item-nome">Item</span>
+          <span id="modalItemPreco" class="modal-item-preco">R$ 0,00 / un.</span>
+        </div>
+      </div>
+      <div class="qtd-control">
+        <button class="btn-qtd" onclick="ui.ajustarQtd(-1)">−</button>
+        <span class="qtd-value" id="qtdValue">1</span>
+        <button class="btn-qtd" onclick="ui.ajustarQtd(+1)">+</button>
+      </div>
+      <div class="qtd-subtotal" id="qtdSubtotal">Subtotal: R$ 0,00</div>
+      <div class="modal-actions">
+        <button class="btn btn--ghost" onclick="ui.fecharModalQtd()">Cancelar</button>
+        <button class="btn btn--primary" onclick="ui.confirmarItem()">Adicionar ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/cardapio.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
