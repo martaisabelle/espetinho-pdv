@@ -1,193 +1,166 @@
 /**
- * app.js — Lógica de negócio principal
- *
+ * app.js — Lógica de negócio  v3
  * Coordena: Storage ↔ Cardapio ↔ UI
- *
- * Estado local do formulário:
- * _itensPedido: Array de { id, emoji, nome, preco, qtd }
- * (mantido em memória enquanto o pedido está sendo montado)
- *
- * Para migração ao backend:
- * → substitua Storage.* por fetch('/api/pedidos', ...)
- * → _itensPedido pode virar body de um POST
  */
 
 const app = (() => {
 
-  /* ─── ESTADO DO FORMULÁRIO ───────────────────────────────── */
+  /* ─── ESTADO DO RASCUNHO ─────────────────────────────── */
+  let _itens = []; // itens selecionados do cardápio para o pedido atual
 
-  // Itens selecionados do cardápio para o pedido atual
-  let _itensPedido = [];
-
-  /* ─── INICIALIZAÇÃO ──────────────────────────────────────── */
+  /* ─── INIT ───────────────────────────────────────────── */
 
   function init() {
-    // Aplica tema salvo
     ui.initTheme();
-
-    // Carrega pedidos salvos
-    const pedidos = Storage.listar();
-    ui.renderizarPedidos(pedidos);
-
-    // Inicia cardápio (grid + autocomplete)
+    ui.renderizarPedidos(Storage.listar());
     ui.initCardapio();
 
-    // Atalho Enter no campo de valor
-    document.getElementById('inputValor').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') criarPedido();
-    });
+    // Enter no campo valor → cria pedido
+    const valInput = document.getElementById('inputValor');
+    if (valInput) {
+      valInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') criarPedido();
+      });
+    }
 
-    // Ao abrir aba "novo" no mobile, foca o primeiro campo
+    // No mobile, foca cliente ao trocar para aba novo
     const tabNovo = document.querySelector('[data-tab="novo"]');
     if (tabNovo) {
       tabNovo.addEventListener('click', () => {
-        setTimeout(() => document.getElementById('inputCliente').focus(), 80);
+        if (window.innerWidth < 640) {
+          setTimeout(() => {
+            const el = document.getElementById('inputCliente');
+            if (el) el.focus();
+          }, 80);
+        }
       });
     }
 
-    console.log('[App] Iniciado. Pedidos:', pedidos.length);
+    console.log('[App v3] pronto. Pedidos:', Storage.listar().length);
   }
 
-  /* ─── CARDÁPIO: ADICIONAR ITEM AO RASCUNHO ───────────────── */
+  /* ─── CARDÁPIO ───────────────────────────────────────── */
 
-  /**
-   * Chamado pelo ui.confirmarItem() após o modal de quantidade.
-   * @param {Object} item    — item do cardápio
-   * @param {number} qtd     — quantidade selecionada
-   */
   function adicionarItemAoPedido(item, qtd) {
-    // Se o item já existe, acumula a quantidade
-    const existente = _itensPedido.find(e => e.id === item.id);
-    if (existente) {
-      existente.qtd += qtd;
+    const existe = _itens.find(e => e.id === item.id);
+    if (existe) {
+      existe.qtd += qtd;
     } else {
-      _itensPedido.push({
-        id:    item.id,
-        emoji: item.emoji,
-        nome:  item.nome,
-        preco: item.preco,
-        qtd:   qtd,
-      });
+      _itens.push({ id: item.id, icon: item.icon, nome: item.nome, preco: item.preco, qtd });
     }
-
-    // Atualiza a UI com os itens e o valor calculado
-    ui.renderizarItensAdicionados(_itensPedido);
+    ui.renderizarItensAdicionados(_itens);
   }
 
-  /**
-   * Remove um item da lista pelo índice.
-   * @param {number} idx
-   */
   function removerItemDoPedido(idx) {
-    _itensPedido.splice(idx, 1);
-    ui.renderizarItensAdicionados(_itensPedido);
+    _itens.splice(idx, 1);
+    ui.renderizarItensAdicionados(_itens);
   }
 
-  /** Limpa todos os itens do rascunho */
   function limparItensPedido() {
-    _itensPedido = [];
-    ui.renderizarItensAdicionados(_itensPedido);
-    document.getElementById('inputValor').value = '';
+    _itens = [];
+    ui.renderizarItensAdicionados(_itens);
+    const v = document.getElementById('inputValor');
+    if (v) v.value = '';
   }
 
-  /* ─── CRIAR PEDIDO ───────────────────────────────────────── */
+  /* ─── CRIAR PEDIDO ───────────────────────────────────── */
 
   function criarPedido() {
-    const cliente  = document.getElementById('inputCliente').value.trim();
-    const obsTexto = document.getElementById('inputItens').value.trim();
-    const valorRaw = document.getElementById('inputValor').value;
+    const cliente  = (document.getElementById('inputCliente')?.value || '').trim();
+    const obsTexto = (document.getElementById('inputItens')?.value   || '').trim();
+    const valorRaw = document.getElementById('inputValor')?.value || '';
     const valor    = parseFloat(valorRaw);
 
-    // Monta o texto de itens: cardápio estruturado + observação livre
-    const linhasCardapio = _itensPedido.map(e =>
-      `${e.qtd}× ${e.emoji} ${e.nome} (${ui.formatarDinheiro(e.qtd * e.preco)})`
+    // Monta texto dos itens
+    const linhas = _itens.map(e =>
+      `${e.qtd}× ${e.nome}  ${ui.formatarDinheiro(e.qtd * e.preco)}`
     );
-    const todosItens = [
-      ...linhasCardapio,
-      ...(obsTexto ? [obsTexto] : []),
-    ].join('\n');
+    if (obsTexto) linhas.push(obsTexto);
+    const textoPedido = linhas.join('\n');
 
     // Validações
-    if (!todosItens) {
-      ui.mostrarFeedback('⚠ Adicione ao menos 1 item ao pedido!', 'erro');
+    if (!textoPedido.trim()) {
+      ui.mostrarFeedback('⚠ Adicione ao menos 1 item!', 'erro');
       return;
     }
 
     if (!valorRaw || isNaN(valor) || valor < 0) {
-      ui.mostrarFeedback('⚠ Informe o valor do pedido!', 'erro');
-      document.getElementById('inputValor').focus();
+      ui.mostrarFeedback('⚠ Informe o valor total!', 'erro');
+      document.getElementById('inputValor')?.focus();
       return;
     }
 
     const pedido = {
       id:          Storage.gerarId(),
-      cliente:     cliente || '',
-      itens:       todosItens,
+      cliente:     cliente,
+      itens:       textoPedido,
       valor:       valor,
       status:      'andamento',
       criadoEm:    new Date().toISOString(),
       concluidoEm: null,
-      // Dados estruturados para futura API / relatórios
-      _itensDetalhados: _itensPedido.slice(),
-      _version: 2,
+      _itensDetalhe: _itens.slice(),
+      _v: 3,
     };
 
-    const ok = Storage.adicionar(pedido);
-
-    if (ok) {
-      // Reseta o rascunho
-      _itensPedido = [];
+    if (Storage.adicionar(pedido)) {
+      _itens = [];
       ui.limparForm();
       ui.renderizarItensAdicionados([]);
       ui.renderizarPedidos(Storage.listar());
       ui.mostrarFeedback('✓ Pedido adicionado!');
-
-      // Volta para a aba de pedidos no mobile
-      setTimeout(() => {
-        if (window.innerWidth < 600) ui.switchTab('pedidos');
-      }, 700);
+      if (window.innerWidth < 640) {
+        setTimeout(() => ui.switchTab('pedidos'), 700);
+      }
     } else {
       ui.mostrarFeedback('Erro ao salvar. Tente novamente.', 'erro');
     }
   }
 
-  /* ─── CONCLUIR PEDIDO ────────────────────────────────────── */
+  /* ─── CONCLUIR ───────────────────────────────────────── */
 
   function concluirPedido(id) {
-    const ok = Storage.atualizar(id, {
-      status:      'concluido',
+    if (Storage.atualizar(id, {
+      status: 'concluido',
       concluidoEm: new Date().toISOString(),
-    });
-    if (ok) ui.renderizarPedidos(Storage.listar());
+    })) {
+      ui.renderizarPedidos(Storage.listar());
+    }
   }
 
-  /* ─── EXCLUIR PEDIDO ─────────────────────────────────────── */
+  /* ─── EXCLUIR ────────────────────────────────────────── */
 
   function confirmarExcluir(id) {
-    ui.abrirModal('Excluir este pedido?', () => _excluirPedido(id));
+    ui.abrirModal('Excluir este pedido?', () => {
+      if (Storage.remover(id)) {
+        ui.renderizarPedidos(Storage.listar());
+      }
+    });
   }
 
-  function _excluirPedido(id) {
-    const ok = Storage.remover(id);
-    if (ok) ui.renderizarPedidos(Storage.listar());
-  }
-
-  /* ─── LIMPAR CONCLUÍDOS ──────────────────────────────────── */
+  /* ─── LIMPAR CONCLUÍDOS ─────────────────────────────── */
 
   function limparConcluidos() {
-    const concluidos = Storage.listar().filter(p => p.status === 'concluido');
-    if (concluidos.length === 0) return;
+    const lista = Storage.listar().filter(p => p.status === 'concluido');
+
+    if (lista.length === 0) {
+      ui.mostrarFeedback('Nenhum pedido concluído para limpar.', 'erro');
+      return;
+    }
 
     ui.abrirModal(
-      `Limpar ${concluidos.length} pedido(s) concluído(s)?\nIsso não pode ser desfeito.`,
+      `Apagar ${lista.length} pedido(s) concluído(s)?\nIsso não pode ser desfeito.`,
       () => {
-        Storage.limparConcluidos();
-        ui.renderizarPedidos(Storage.listar());
+        // Executa a limpeza e re-renderiza
+        const ok = Storage.limparConcluidos();
+        if (ok) {
+          ui.renderizarPedidos(Storage.listar());
+          ui.mostrarFeedback('Histórico do dia limpo.');
+        }
       }
     );
   }
 
-  /* ─── BOOT ───────────────────────────────────────────────── */
+  /* ─── BOOT ───────────────────────────────────────────── */
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
@@ -195,7 +168,6 @@ const app = (() => {
     init();
   }
 
-  // API pública
   return {
     criarPedido,
     concluirPedido,

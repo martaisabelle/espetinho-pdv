@@ -1,211 +1,344 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="dark">
+<html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="theme-color" content="#0d0d0d" id="themeColorMeta" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#faf6f0" id="themeColorMeta" />
   <title>Espetinho App</title>
   <link rel="icon" type="image/png" href="src/espeto.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
 
-  <!-- HEADER -->
+  <!-- ══════════════════════════════════════════
+       HEADER
+       ══════════════════════════════════════════ -->
   <header class="header">
     <div class="header-left">
-      <span class="header-icon">🍢</span>
-      <span class="header-title">ESPETINHO</span>
-    </div>
-    <div class="header-right">
-      <div class="header-summary">
-        <span id="summaryCount">0 pedidos</span>
-        <span class="summary-divider">|</span>
-        <span id="summaryTotal">R$ 0,00</span>
+
+      <!-- Logo com SVG inline -->
+      <div class="header-logo">
+        <svg width="20" height="20" viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="27" x2="27" y2="5" stroke-width="1.5"/>
+          <rect x="12.5" y="7.5" width="7" height="5.5" rx="3" transform="rotate(45 16 10.25)" fill="none"/>
+          <rect x="17"   y="12"  width="7" height="5.5" rx="3" transform="rotate(45 20.5 14.75)" fill="none"/>
+          <rect x="7.5"  y="17"  width="7" height="5.5" rx="3" transform="rotate(45 11 19.75)" fill="none"/>
+          <circle cx="27" cy="5" r="2" fill="#fff" stroke="none"/>
+        </svg>
       </div>
+
+      <div>
+        <div class="header-title">Espetinho</div>
+        <div class="header-subtitle">PDV · Controle de pedidos</div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="header-kpi">
+        <span class="header-kpi-value" id="headerKpiValue">R$ 0,00</span>
+        <span class="header-kpi-label" id="headerKpiLabel">0 pedidos</span>
+      </div>
+
       <button class="btn-theme" id="btnTheme" onclick="ui.toggleTheme()" title="Alternar tema">
-        <span id="themeIcon">☀️</span>
+        <span id="themeIcon">
+          <!-- Lua (modo dark é opcional; light é padrão) -->
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/>
+          </svg>
+        </span>
       </button>
     </div>
   </header>
 
-  <!-- TABS -->
+  <!-- ══════════════════════════════════════════
+       TABS (mobile only)
+       ══════════════════════════════════════════ -->
   <nav class="tabs">
-    <button class="tab active" data-tab="pedidos" onclick="ui.switchTab('pedidos')">
-      PEDIDOS
+    <button class="tab" data-tab="pedidos" onclick="ui.switchTab('pedidos')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+        <rect x="8" y="2" width="8" height="4" rx="1"/>
+        <line x1="9" y1="12" x2="15" y2="12"/>
+        <line x1="9" y1="16" x2="13" y2="16"/>
+      </svg>
+      Pedidos
       <span class="tab-badge" id="badgePedidos">0</span>
     </button>
-    <button class="tab" data-tab="concluidos" onclick="ui.switchTab('concluidos')">
-      FEITOS
-      <span class="tab-badge tab-badge--done" id="badgeConcluidos">0</span>
-    </button>
+
     <button class="tab" data-tab="novo" onclick="ui.switchTab('novo')">
-      + NOVO
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5"  y1="12" x2="19" y2="12"/>
+      </svg>
+      Novo
+    </button>
+
+    <button class="tab" data-tab="concluidos" onclick="ui.switchTab('concluidos')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="9 12 11 14 15 10"/>
+      </svg>
+      Feitos
+      <span class="tab-badge tab-badge--done" id="badgeConcluidos">0</span>
     </button>
   </nav>
 
-  <!-- MAIN -->
+  <!-- ══════════════════════════════════════════
+       MAIN
+       ══════════════════════════════════════════ -->
   <main class="main">
 
-    <!-- ── ABA: PEDIDOS EM ANDAMENTO ─────────────────────── -->
-    <section class="tab-content active" id="tab-pedidos">
-      <div class="list-header">
-        <span>EM ANDAMENTO</span>
-        <span id="countAndamento" class="list-count">0</span>
+    <!-- ── ABA: PEDIDOS ─────────────────────── -->
+    <section class="tab-content" id="tab-pedidos">
+      <div class="section-header">
+        <span class="section-title">Em andamento</span>
+        <span class="section-count" id="countAndamento">0</span>
       </div>
+
       <div class="order-list" id="listaPedidos">
         <div class="empty-state" id="emptyPedidos">
-          <span class="empty-icon">📋</span>
-          <p>Nenhum pedido ainda</p>
-          <small>Toque em "+ NOVO" para começar</small>
+          <div class="empty-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+              <rect x="8" y="2" width="8" height="4" rx="1"/>
+              <line x1="9" y1="12" x2="15" y2="12"/>
+              <line x1="9" y1="16" x2="13" y2="16"/>
+            </svg>
+          </div>
+          <p>Nenhum pedido em aberto</p>
+          <small>Toque em "Novo" para começar</small>
         </div>
       </div>
     </section>
 
-    <!-- ── ABA: CONCLUÍDOS ───────────────────────────────── -->
-    <section class="tab-content" id="tab-concluidos">
-      <div class="list-header">
-        <span>CONCLUÍDOS HOJE</span>
-        <span id="countConcluidos" class="list-count">0</span>
-      </div>
-      <div class="order-list" id="listaConcluidos">
-        <div class="empty-state" id="emptyConcluidos">
-          <span class="empty-icon">✅</span>
-          <p>Nenhum pedido concluído</p>
-          <small>Os pedidos finalizados aparecerão aqui</small>
-        </div>
-      </div>
-      <div class="day-summary">
-        <div class="day-summary-title">RESUMO DO DIA</div>
-        <div class="day-summary-grid">
-          <div class="day-stat">
-            <span class="day-stat-value" id="resumoTotal">R$ 0,00</span>
-            <span class="day-stat-label">Total Vendido</span>
-          </div>
-          <div class="day-stat">
-            <span class="day-stat-value" id="resumoQtd">0</span>
-            <span class="day-stat-label">Pedidos</span>
-          </div>
-        </div>
-        <button class="btn btn--danger btn--sm" onclick="app.limparConcluidos()">
-          Limpar histórico do dia
-        </button>
-      </div>
-    </section>
-
-    <!-- ── ABA: NOVO PEDIDO ──────────────────────────────── -->
-    <section class="tab-content" id="tab-novo">
+    <!-- ── ABA: NOVO PEDIDO ─────────────────── -->
+    <section class="tab-content active" id="tab-novo">
       <div class="form-card">
-        <h2 class="form-title">Novo Pedido</h2>
+        <h2 class="form-card-title">Novo <span>Pedido</span></h2>
 
         <!-- Cliente -->
         <div class="field">
-          <label class="label">Cliente <span class="optional">(opcional)</span></label>
+          <label class="label">
+            Cliente
+            <span class="optional">opcional</span>
+          </label>
           <input class="input" id="inputCliente" type="text"
             placeholder="Ex: Mesa 3, João..." autocomplete="off" />
         </div>
 
-        <!-- ── CARDÁPIO RÁPIDO ─────────────────────────────── -->
+        <!-- Cardápio -->
         <div class="field">
           <label class="label">Cardápio</label>
 
-          <!-- Busca autocomplete -->
+          <!-- Busca -->
           <div class="search-wrap">
+            <div class="search-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="7"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </div>
             <input class="input input-search" id="inputBuscaCardapio" type="text"
-              placeholder="🔍  Buscar item (frango, cerveja...)" autocomplete="off" />
+              placeholder="Buscar item no cardápio..." autocomplete="off" />
             <div class="cardapio-sugestoes" id="cardapioSugestoes"></div>
           </div>
 
           <!-- Filtros de categoria -->
           <div class="cardapio-tabs">
-            <button class="cardapio-tab active" data-cat="espeto" onclick="ui.filtrarCardapio('espeto')">🍢 Espetos</button>
-            <button class="cardapio-tab" data-cat="bebida" onclick="ui.filtrarCardapio('bebida')">🥤 Bebidas</button>
-            <button class="cardapio-tab" data-cat="acomp"  onclick="ui.filtrarCardapio('acomp')">🫙 Acomp.</button>
-            <button class="cardapio-tab" data-cat="combo"  onclick="ui.filtrarCardapio('combo')">🎯 Combos</button>
+            <button class="cardapio-tab active" type="button" data-cat="espeto" onclick="ui.filtrarCardapio('espeto')">
+              <span class="ctab-icon">
+                <svg width="13" height="13" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <line x1="4" y1="28" x2="28" y2="4"/><rect x="11" y="9" width="6" height="5" rx="2.5" transform="rotate(45 14 11.5)"/>
+                  <rect x="16" y="14" width="6" height="5" rx="2.5" transform="rotate(45 19 16.5)"/>
+                </svg>
+              </span>
+              Espetos
+            </button>
+            <button class="cardapio-tab" type="button" data-cat="bebida" onclick="ui.filtrarCardapio('bebida')">
+              <span class="ctab-icon">
+                <svg width="13" height="13" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <rect x="9" y="8" width="14" height="18" rx="4"/>
+                  <ellipse cx="16" cy="8" rx="7" ry="2.5"/>
+                </svg>
+              </span>
+              Bebidas
+            </button>
+            <button class="cardapio-tab" type="button" data-cat="acomp" onclick="ui.filtrarCardapio('acomp')">
+              <span class="ctab-icon">
+                <svg width="13" height="13" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <rect x="10" y="12" width="12" height="14" rx="2"/>
+                  <path d="M8 12 C8 10 10 9 12 9 L20 9 C22 9 24 10 24 12 Z"/>
+                </svg>
+              </span>
+              Acomp.
+            </button>
+            <button class="cardapio-tab" type="button" data-cat="combo" onclick="ui.filtrarCardapio('combo')">
+              <span class="ctab-icon">
+                <svg width="13" height="13" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M4 10 L16 4 L28 10 L28 22 L16 28 L4 22 Z"/>
+                  <line x1="4" y1="10" x2="28" y2="10"/>
+                  <line x1="16" y1="4" x2="16" y2="28"/>
+                </svg>
+              </span>
+              Combos
+            </button>
           </div>
 
           <!-- Grid de itens -->
           <div class="cardapio-grid" id="cardapioGrid"></div>
         </div>
 
-        <!-- Itens adicionados ao pedido -->
+        <!-- Itens adicionados -->
         <div class="field" id="fieldItensAdicionados" style="display:none">
           <label class="label">
-            Itens adicionados
-            <button class="btn-link" onclick="app.limparItensPedido()">limpar tudo</button>
+            Itens selecionados
+            <button class="btn-link" type="button" onclick="app.limparItensPedido()">limpar tudo</button>
           </label>
           <div class="itens-adicionados" id="itensAdicionados"></div>
         </div>
 
-        <!-- Observação / item avulso -->
+        <!-- Observação livre -->
         <div class="field">
-          <label class="label">Observação / item avulso <span class="optional">(opcional)</span></label>
+          <label class="label">
+            Observação
+            <span class="optional">opcional</span>
+          </label>
           <textarea class="input textarea" id="inputItens"
-            placeholder="Ex: sem sal, ponto mal passado, açaí..." rows="2"></textarea>
+            placeholder="Sem sal, ponto mal passado, item avulso..." rows="2"></textarea>
         </div>
 
         <!-- Valor total -->
         <div class="field">
           <label class="label">
-            Valor Total
+            Valor total
             <span class="label-hint" id="valorCalcHint"></span>
           </label>
           <div class="input-money-wrap">
             <span class="money-prefix">R$</span>
-            <input class="input input-money" id="inputValor" type="number"
-              min="0" step="0.50" placeholder="0,00" inputmode="decimal" />
+            <input class="input input-money" id="inputValor"
+              type="number" min="0" step="0.50" placeholder="0,00" inputmode="decimal" />
           </div>
         </div>
 
-        <button class="btn btn--primary btn--full" onclick="app.criarPedido()">
-          ✓ ADICIONAR PEDIDO
+        <button class="btn btn--primary btn--full" type="button" onclick="app.criarPedido()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Adicionar Pedido
         </button>
 
         <div class="feedback" id="feedback"></div>
       </div>
     </section>
 
+    <!-- ── ABA: CONCLUÍDOS ───────────────────── -->
+    <section class="tab-content" id="tab-concluidos">
+      <div class="section-header">
+        <span class="section-title">Concluídos hoje</span>
+        <span class="section-count" id="countConcluidos">0</span>
+      </div>
+
+      <div class="order-list" id="listaConcluidos">
+        <div class="empty-state" id="emptyConcluidos">
+          <div class="empty-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="9 12 11 14 15 10"/>
+            </svg>
+          </div>
+          <p>Nenhum pedido concluído</p>
+          <small>Os pedidos finalizados aparecem aqui</small>
+        </div>
+      </div>
+
+      <!-- Resumo do dia -->
+      <div class="day-summary">
+        <span class="day-summary-label">Resumo do dia</span>
+        <div class="day-summary-grid">
+          <div class="day-stat">
+            <span class="day-stat-value" id="resumoTotal">R$ 0,00</span>
+            <span class="day-stat-label">Total</span>
+          </div>
+          <div class="day-divider"></div>
+          <div class="day-stat">
+            <span class="day-stat-value" id="resumoQtd">0</span>
+            <span class="day-stat-label">Pedidos</span>
+          </div>
+        </div>
+        <button class="btn btn--ghost btn--sm" type="button" onclick="app.limparConcluidos()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6"/><path d="M14 11v6"/>
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+          </svg>
+          Limpar histórico do dia
+        </button>
+      </div>
+    </section>
+
   </main>
 
-  <!-- ═══ MODAL: CONFIRMAÇÃO ════════════════════════════════ -->
+  <!-- ══════════════════════════════════════════
+       MODAL: CONFIRMAÇÃO
+       ══════════════════════════════════════════ -->
   <div class="modal-overlay" id="modalOverlay" onclick="ui.fecharModal()">
     <div class="modal" onclick="event.stopPropagation()">
       <p class="modal-text" id="modalText">Tem certeza?</p>
       <div class="modal-actions">
-        <button class="btn btn--ghost" onclick="ui.fecharModal()">Cancelar</button>
-        <button class="btn btn--danger" id="modalConfirm">Confirmar</button>
+        <button class="btn btn--ghost" type="button" onclick="ui.fecharModal()">Cancelar</button>
+        <button class="btn btn--danger" type="button" id="modalConfirm">Confirmar</button>
       </div>
     </div>
   </div>
 
-  <!-- ═══ MODAL: QUANTIDADE ══════════════════════════════════ -->
+  <!-- ══════════════════════════════════════════
+       MODAL: QUANTIDADE
+       ══════════════════════════════════════════ -->
   <div class="modal-overlay" id="modalQtdOverlay">
     <div class="modal modal--qtd" onclick="event.stopPropagation()">
-      <div class="modal-item-info">
-        <span id="modalItemEmoji" class="modal-item-emoji">🍢</span>
-        <div class="modal-item-texts">
-          <span id="modalItemNome" class="modal-item-nome">Item</span>
-          <span id="modalItemPreco" class="modal-item-preco">R$ 0,00 / un.</span>
+
+      <div class="modal-item-card">
+        <div class="modal-item-icon" id="modalItemIconWrap">
+          <!-- preenchido por ui.js -->
+        </div>
+        <div class="modal-item-info">
+          <span class="modal-item-nome"  id="modalItemNome">—</span>
+          <span class="modal-item-preco" id="modalItemPreco">R$ 0,00 / un.</span>
         </div>
       </div>
+
       <div class="qtd-control">
-        <button class="btn-qtd" onclick="ui.ajustarQtd(-1)">−</button>
+        <button class="btn-qtd" type="button" onclick="ui.ajustarQtd(-1)">−</button>
         <span class="qtd-value" id="qtdValue">1</span>
-        <button class="btn-qtd" onclick="ui.ajustarQtd(+1)">+</button>
+        <button class="btn-qtd" type="button" onclick="ui.ajustarQtd(+1)">+</button>
       </div>
+
       <div class="qtd-subtotal" id="qtdSubtotal">Subtotal: R$ 0,00</div>
+
       <div class="modal-actions">
-        <button class="btn btn--ghost" onclick="ui.fecharModalQtd()">Cancelar</button>
-        <button class="btn btn--primary" onclick="ui.confirmarItem()">Adicionar ✓</button>
+        <button class="btn btn--ghost"   type="button" onclick="ui.fecharModalQtd()">Cancelar</button>
+        <button class="btn btn--primary" type="button" onclick="ui.confirmarItem()">Adicionar</button>
       </div>
     </div>
   </div>
 
+  <!-- ══════════════════════════════════════════
+       SCRIPTS — ordem importa
+       ══════════════════════════════════════════ -->
   <script src="js/storage.js"></script>
+  <script src="js/icons.js"></script>
   <script src="js/cardapio.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/app.js"></script>
+
+  <!-- Ativa aba pedidos no mobile após carregar -->
+  <script>
+    if (window.innerWidth < 640) {
+      document.addEventListener('DOMContentLoaded', () => ui.switchTab('pedidos'));
+    }
+  </script>
 </body>
 </html>
